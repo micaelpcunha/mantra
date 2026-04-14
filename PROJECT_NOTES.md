@@ -2631,3 +2631,5 @@
 - Validacao:
   - `origin` configurado para `https://github.com/micaelpcunha/mantra.git`
   - staging local concluido sem incluir `supabase/.temp`
+  - `git push -u origin main` concluido com sucesso
+  - branch `main` ficou a seguir `origin/main`
