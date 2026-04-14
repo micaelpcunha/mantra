@@ -1,0 +1,80 @@
+# Pipeline remota recomendada para gerar a build iOS assinada e enviar para
+# App Store Connect / TestFlight sem depender de um Mac local recente.
+#
+# Antes de correr:
+# - liga o repositorio ao Codemagic
+# - cria uma integracao App Store Connect com o nome
+#   `mantra-app-store-connect`
+# - cria o grupo de variaveis `ios_remote_release` com `APP_STORE_APPLE_ID`
+# - no Codemagic, faz fetch dos certificados / provisioning profiles App Store
+#   para `com.micaelcunha.mantra`
+
+workflows:
+  ios-testflight:
+    name: iOS TestFlight
+    max_build_duration: 120
+    integrations:
+      app_store_connect: mantra-app-store-connect
+    environment:
+      flutter: stable
+      xcode: 26.2.x
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.micaelcunha.mantra
+      groups:
+        - ios_remote_release
+      vars:
+        BUNDLE_ID: "com.micaelcunha.mantra"
+    cache:
+      cache_paths:
+        - $FLUTTER_ROOT/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
+    scripts:
+      - name: Confirm required variables
+        script: |
+          if [ -z "$APP_STORE_APPLE_ID" ]; then
+            echo "Falta APP_STORE_APPLE_ID no grupo ios_remote_release."
+            exit 1
+          fi
+      - name: Resolve build name and build number
+        script: |
+          APP_VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d'+' -f1)
+          if [ -z "$APP_VERSION" ]; then
+            APP_VERSION="1.0.0"
+          fi
+
+          LATEST_BUILD_NUMBER=$(app-store-connect get-latest-app-store-build-number "$APP_STORE_APPLE_ID" || true)
+          if [ -z "$LATEST_BUILD_NUMBER" ]; then
+            RESOLVED_BUILD_NUMBER="${BUILD_NUMBER:-1}"
+          else
+            RESOLVED_BUILD_NUMBER=$(($LATEST_BUILD_NUMBER + 1))
+          fi
+
+          echo "CM_MANTRA_BUILD_NAME=$APP_VERSION" >> "$CM_ENV"
+          echo "CM_MANTRA_BUILD_NUMBER=$RESOLVED_BUILD_NUMBER" >> "$CM_ENV"
+      - name: Apply Apple code signing
+        script: |
+          xcode-project use-profiles
+      - name: Install Flutter packages
+        script: |
+          flutter pub get
+      - name: Run widget smoke test
+        script: |
+          flutter test --no-pub test/widget_test.dart
+      - name: Install CocoaPods dependencies
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+      - name: Build signed IPA
+        script: |
+          flutter build ipa --release \
+            --build-name="$CM_MANTRA_BUILD_NAME" \
+            --build-number="$CM_MANTRA_BUILD_NUMBER" \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+    publishing:
+      app_store_connect:
+        auth: integration

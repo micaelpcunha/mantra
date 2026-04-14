@@ -1,0 +1,18 @@
+# Estas functions tratam a autenticacao dentro do proprio codigo.
+# `email-provider-callback` tambem precisa de aceitar o redirect publico
+# do provider OAuth, por isso o `verify_jwt` legado deve ficar desligado.
+
+[functions.account-bootstrap]
+verify_jwt = false
+
+[functions.email-provider-start]
+verify_jwt = false
+
+[functions.email-provider-callback]
+verify_jwt = false
+
+[functions.authorization-email-send]
+verify_jwt = false
+
+[functions.daily-operations-summary]
+verify_jwt = false

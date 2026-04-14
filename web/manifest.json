@@ -1,0 +1,35 @@
+{
+    "name": "Mantra",
+    "short_name": "Mantra",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#162330",
+    "theme_color": "#162330",
+    "description": "Mantra multiempresa para gestao de ativos, locais e ordens de trabalho.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
